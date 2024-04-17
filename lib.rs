@@ -24,6 +24,7 @@
 //! }
 //! ```
 #![warn(missing_docs)]
+#![allow(unused_qualifications)]
 
 use slog::{Drain, Level, OwnedKVList, Record};
 use std::{fmt, io};
@@ -146,7 +147,7 @@ impl Drain for Streamer3164 {
     type Ok = ();
 
     fn log(&self, info: &Record, logger_values: &OwnedKVList) -> io::Result<()> {
-        if self.level > info.level() {
+        if !info.level().is_at_least(self.level) {
             return Ok(())
         }
         TL_BUF.with(|buf| {
