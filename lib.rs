@@ -27,12 +27,12 @@
 #![allow(unused_qualifications)]
 
 use slog::{Drain, Level, OwnedKVList, Record};
-use std::{fmt, io};
-use std::sync::Mutex;
 use std::cell::RefCell;
-use std::path::{Path, PathBuf};
-use std::net::SocketAddr;
 use std::io::{Error, ErrorKind};
+use std::net::SocketAddr;
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+use std::{fmt, io};
 
 use slog::KV;
 
@@ -45,12 +45,15 @@ thread_local! {
 type SysLogger = syslog::Logger<syslog::LoggerBackend, syslog::Formatter3164>;
 
 #[inline]
-fn handle_syslog_error(e: syslog::Error) -> io::Error
-{
+fn handle_syslog_error(e: syslog::Error) -> io::Error {
     Error::new(ErrorKind::Other, e.to_string())
 }
 
-fn log_with_level(level: slog::Level, mut io: std::sync::MutexGuard<Box<SysLogger>>, buf: &str) -> io::Result<()> {
+fn log_with_level(
+    level: slog::Level,
+    mut io: std::sync::MutexGuard<Box<SysLogger>>,
+    buf: &str,
+) -> io::Result<()> {
     let err = match level {
         Level::Critical => io.crit(&buf),
         Level::Error => io.err(&buf),
@@ -62,26 +65,29 @@ fn log_with_level(level: slog::Level, mut io: std::sync::MutexGuard<Box<SysLogge
     err.map_err(handle_syslog_error)
 }
 
-/// Create a formatter with runtime metadata filled in. 
+/// Create a formatter with runtime metadata filled in.
 ///
 /// This follows ``get_process_info()`` in the syslog crate to some extent
 /// which is private.
-fn syslog_format3164(facility: syslog::Facility, hostname: Option<String>, process_name: Option<String>) -> syslog::Formatter3164 {
+fn syslog_format3164(
+    facility: syslog::Facility,
+    hostname: Option<String>,
+    process_name: Option<String>,
+) -> syslog::Formatter3164 {
     let process = process_name.unwrap_or_else(|| {
-        let path = std::env::current_exe()
-            .unwrap_or_else(|_| PathBuf::new());
-        let filename = path.file_name()
+        let path = std::env::current_exe().unwrap_or_else(|_| PathBuf::new());
+        let filename = path
+            .file_name()
             .map(|file| file.to_string_lossy().into_owned())
             .unwrap_or_else(|| String::new());
         filename
     });
 
-
     syslog::Formatter3164 {
         facility,
         hostname,
         process,
-        pid: std::process::id() as i32,
+        pid: std::process::id() as u32,
     }
 }
 
@@ -107,7 +113,8 @@ fn get_default_level() -> Level {
         Level::Warning
     } else if cfg!(feature = "max_level_error") {
         Level::Error
-    } else { // max_level_off
+    } else {
+        // max_level_off
         Level::Critical
     }
 }
@@ -124,7 +131,8 @@ fn get_default_level() -> Level {
         Level::Warning
     } else if cfg!(feature = "release_max_level_error") {
         Level::Error
-    } else { // release_max_level_off
+    } else {
+        // release_max_level_off
         Level::Critical
     }
 }
@@ -152,15 +160,15 @@ impl Drain for Streamer3164 {
 
     fn log(&self, info: &Record, logger_values: &OwnedKVList) -> io::Result<()> {
         if !info.level().is_at_least(self.level) {
-            return Ok(())
+            return Ok(());
         }
         TL_BUF.with(|buf| {
             let mut buf = buf.borrow_mut();
             let res = {
                 || {
                     self.format.format(&mut *buf, info, logger_values)?;
-                    let io = 
-                        self.io
+                    let io = self
+                        .io
                         .lock()
                         .map_err(|_| Error::new(ErrorKind::Other, "locking error"))?;
 
@@ -340,11 +348,11 @@ impl SyslogBuilder {
             } => {
                 let format = syslog_format3164(facility, Some(hostname), self.process);
                 syslog::udp(format, local, host).map_err(handle_syslog_error)?
-            },
+            }
             SyslogKind::Tcp { server, hostname } => {
                 let format = syslog_format3164(facility, Some(hostname), self.process);
                 syslog::tcp(format, server).map_err(handle_syslog_error)?
-            },
+            }
         };
         Ok(Streamer3164::new_with_level(Box::new(log), self.level))
     }
