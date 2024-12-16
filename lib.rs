@@ -87,7 +87,7 @@ fn syslog_format3164(
         facility,
         hostname,
         process,
-        pid: std::process::id() as u32,
+        pid: std::process::id(),
     }
 }
 
@@ -167,8 +167,8 @@ impl Drain for Streamer3164 {
             let res = {
                 || {
                     self.format.format(&mut *buf, info, logger_values)?;
-                    let io = self
-                        .io
+                    let io =
+                        self.io
                         .lock()
                         .map_err(|_| Error::new(ErrorKind::Other, "locking error"))?;
 

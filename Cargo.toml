@@ -1,9 +1,10 @@
 [package]
 name = "slog-syslog"
-version = "0.13.0"
+version = "0.13.1"
 authors = [
     "Dawid Ciężarkiewicz <dpc@dpc.pw>",
-    "William Laeder <codylaeder@gmail.com",
+    "William Laeder <codylaeder@gmail.com>",
+    "Aly Ammar <aly.ammar@bender.de>"
 ]
 description = "Syslog drain for slog-rs"
 keywords = ["slog", "logging", "json", "log", "syslog"]
@@ -12,11 +13,26 @@ documentation = "https://docs.rs/slog-rs/term"
 homepage = "https://github.com/slog-rs/slog"
 repository = "https://github.com/slog-rs/syslog"
 readme = "README.md"
-edition = "2018"
+edition = "2021"
+
+[features]
+default = ["release_max_level_info", "max_level_info"]
+
+release_max_level_trace = []
+release_max_level_debug = []
+release_max_level_info = []
+release_max_level_warn = []
+release_max_level_error = []
+
+max_level_trace = []
+max_level_debug = []
+max_level_info = []
+max_level_warn = []
+max_level_error = []
 
 [lib]
 path = "lib.rs"
 
 [dependencies]
-slog = "^2.1.1"
-syslog = "6.1"
+slog = "^2.7"
+syslog = "^7.0"
