@@ -61,7 +61,7 @@ fn log_with_level(level: slog::Level, mut io: std::sync::MutexGuard<Box<SysLogge
     err.map_err(handle_syslog_error)
 }
 
-/// Create a formatter with runtime metadata filled in. 
+/// Create a formatter with runtime metadata filled in.
 ///
 /// This follows ``get_process_info()`` in the syslog crate to some extent
 /// which is private.
@@ -76,7 +76,7 @@ fn syslog_format3164(facility: syslog::Facility, hostname: Option<String>) -> sy
         facility,
         hostname,
         process,
-        pid: std::process::id() as i32,
+        pid: std::process::id(),
     }
 }
 
@@ -154,7 +154,7 @@ impl Drain for Streamer3164 {
             let res = {
                 || {
                     self.format.format(&mut *buf, info, logger_values)?;
-                    let io = 
+                    let io =
                         self.io
                         .lock()
                         .map_err(|_| Error::new(ErrorKind::Other, "locking error"))?;
